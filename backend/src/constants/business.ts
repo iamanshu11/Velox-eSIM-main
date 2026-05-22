@@ -1,0 +1,55 @@
+export const PROFIT_MARGIN = {
+  MIN: 0.5,
+  DEFAULT: 1.2,
+  MAX: 2.0,
+} as const;
+export const CART_CONFIG = {
+  MAX_QUANTITY_PER_PLAN: 100,
+  MAX_ITEMS_IN_CART: 50,
+  CART_EXPIRY_MINUTES: 30,
+} as const;
+export const ESIM_CONFIG = {
+  MAX_ACTIVE_ESIMS_PER_USER: 10,
+  ACTIVATION_TIMEOUT_MINUTES: 5,
+  RETRY_ATTEMPTS: 3,
+  RETRY_DELAY_MS: 2000,
+} as const;
+export const PAYMENT_CONFIG = {
+  MIN_ORDER_VALUE: 1,
+  MAX_ORDER_VALUE: 10000,
+  TRANSACTION_TIMEOUT_MINUTES: 10,
+  REFUND_WINDOW_DAYS: 30,
+} as const;
+export const RATE_LIMIT_CONFIG = {
+  WINDOW_MS: 15 * 60 * 1000,
+  MAX_REQUESTS_PER_WINDOW: 100,
+  AUTH_MAX_REQUESTS: 5,
+  API_MAX_REQUESTS: 1000,
+} as const;
+export const CACHE_CONFIG = {
+  DEFAULT_TTL_SECONDS: 300,
+  PLANS_TTL_SECONDS: 3600,
+  USER_DATA_TTL_SECONDS: 600,
+  ANALYTICS_TTL_SECONDS: 1800,
+} as const;
+export const API_CONFIG = {
+  REQUEST_TIMEOUT_MS: 30000, 
+  RETRY_ATTEMPTS: 3,
+  RETRY_DELAY_MS: 1000,
+  BACKOFF_MULTIPLIER: 2,
+} as const;
+export const EMAIL_CONFIG = {
+  FROM_EMAIL: 'noreply@veloxesim.com',
+  FROM_NAME: 'Velox eSIM',
+  SUPPORT_EMAIL: 'support@veloxesim.com',
+} as const;
+export const WEBHOOK_CONFIG = {
+  MAX_RETRIES: 5,
+  RETRY_DELAY_MS: 5000,
+  TIMEOUT_MS: 30000,
+} as const;
+export const SESSION_CONFIG = {
+  ACCESS_TOKEN_EXPIRES_IN: '1h',
+  REFRESH_TOKEN_EXPIRES_IN: '7d',
+  SESSION_TIMEOUT_MINUTES: 30,
+} as const;

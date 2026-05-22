@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Next.js build output
+.next/
+out/
+
+# Environment files — NEVER bake secrets into the image
+.env
+.env.local
+.env.*.local
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Test files
+**/__tests__/**
+**/*.spec.ts
+**/*.test.ts
+coverage/
+jest.config.js
+jest.setup.js
+
+# Documentation
+*.md
+docs/
+
+# Logs
+*.log
+logs/
+
+# Misc
+.cache/
+.turbo/

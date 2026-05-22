@@ -1,0 +1,832 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String?
+  role          UserRole @default(CUSTOMER)
+  avatar        String?
+  phone         String?
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(true)
+  countryCode   String?
+  countryName   String?
+  countrySource String?
+  lastSeenCountryCode String?
+  lastSeenCountryName String?
+  lastSeenAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  wallet         Wallet?
+  transactions   Transaction[]
+  payments       Payment[]       @relation("userPayments")
+  invoices       Invoice[]
+  supportTickets SupportTicket[] @relation("userSupportTickets")
+  autoRenewals   AutoRenewal[]   @relation("userAutoRenewals")
+  referralCodes  ReferralCode[]  @relation("userReferralCodes")
+  devices        Device[]        @relation("userDevices")
+  chatSessions   ChatSession[]   @relation("userChatSessions")
+  chatMessages   ChatMessage[]   @relation("userChatMessages")
+  chatFeedback   ChatFeedback[]  @relation("userChatFeedback")
+  chatEscalations ChatEscalation[] @relation("userChatEscalations")
+  liveChatSessions LiveChatSession[] @relation("userLiveChats")
+  
+  emailStatus        String   @default("new")
+  emailUnsubscribed  Boolean  @default(false)
+  activatedAt        DateTime?
+  lastActivityAt     DateTime?
+  emailsSentCount    Int      @default(0)
+  autoEmailLogs      EmailLog[]
+  autoEmailSchedules AutoEmailSchedule[]
+  
+  blogPosts         BlogPost[]     @relation("userBlogPosts")
+  blogAuthors       BlogAuthor[]   @relation("userBlogAuthors")
+
+  @@index([email])
+  @@index([role])
+  @@index([countryCode])
+  @@index([lastSeenCountryCode])
+  @@index([emailStatus])
+  @@index([emailUnsubscribed])
+  @@map("users")
+}
+
+model Settings {
+  id              String   @id @default(cuid())
+  profitMargin    Float    @default(1.2)
+  currency        String   @default("USD")
+  maintenanceMode Boolean  @default(false)
+  supportEmail    String   @default("support@veloxesim.com")
+  esimAccessCode  String?  @default("")
+  esimSecretKey   String?  @default("")
+  
+  smtpHost        String?  @default("smtp.hostinger.com")
+  smtpPort        Int      @default(587)
+  smtpUser        String?  @default("")
+  smtpPassword    String?  @default("")
+  smtpFromEmail   String?  @default("noreply@veloxesim.com")
+  smtpFromName    String?  @default("Velox eSIM")
+  smtpSecure      Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  type        String?
+  notifyType  String?
+  notifyId    String?
+  esimOrderId String?
+  orderNo     String?
+  esimTranNo  String?
+  iccid       String?
+  payload     Json?
+  content     Json?
+  status      String    @default("pending")
+  processed   Boolean   @default(false)
+  retryCount  Int       @default(0)
+  lastError   String?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([notifyType])
+  @@index([status])
+  @@index([processed])
+  @@index([createdAt])
+  @@map("webhook_events")
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  orderNo       String   @unique
+  userId        String
+  
+  transactionId String?  
+  
+  totalAmount   Float?   
+  
+  status        String   @default("processing")
+  paymentStatus String   @default("unpaid")    
+  currency      String   @default("USD")
+  metadata      Json?   
+  invoices      Invoice[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([transactionId])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@map("orders")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  resource  String?
+  module    String?
+  details   String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@map("activity_logs")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Float    @default(0)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("wallets")
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  orderId         String? 
+  
+  transactionType String  
+  amount          Float   
+  balanceBefore   Float   
+  balanceAfter    Float   
+  
+  status          String   @default("pending")
+  
+  reference       String? 
+  failureReason   String? 
+  
+  metadata        Json?   
+  invoices        Invoice[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([transactionType])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([transactionType, status])
+  @@map("transactions")
+}
+
+
+model Payment {
+  id                    String   @id @default(cuid())
+  userId                String
+  stripePaymentIntentId String   @unique
+  amount                Float
+  currency              String   @default("USD")
+  status                String
+  errorMessage          String?
+  metadata              Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  invoice Invoice?
+
+  user User @relation("userPayments", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+  @@index([createdAt])
+  @@map("payments")
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique
+  userId        String
+  paymentId     String?  @unique
+  orderId       String?
+  transactionId String?
+  amount        Float
+  currency      String   @default("USD")
+  status        String   @default("issued")
+  description   String
+  dueDate       DateTime?
+  issuedAt      DateTime @default(now())
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([invoiceNumber])
+  @@map("invoices")
+}
+
+model SupportTicket {
+  id          String    @id @default(cuid())
+  userId      String
+  subject     String
+  message     String
+  status      String    @default("open")
+  priority    String    @default("normal")
+  category    String?
+  attachments String[]
+  responses   String[]
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation("userSupportTickets", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+
+model AutoRenewal {
+  id                   String    @id @default(cuid())
+  userId               String
+  esimId               String
+  enabled              Boolean   @default(false)
+  renewalDaysBefore    Int       @default(5)
+  autoPayFromWallet    Boolean   @default(true)
+  maxAutoRenewals      Int       @default(12)
+  renewalCount         Int       @default(0)
+  lastRenewalAt        DateTime?
+  nextScheduledRenewal DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation("userAutoRenewals", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([enabled])
+  @@index([nextScheduledRenewal])
+  @@index([createdAt])
+  @@map("auto_renewals")
+}
+
+
+model ReferralCode {
+  id        String    @id @default(cuid())
+  userId    String
+  code      String    @unique
+  discount  Int       @default(10)
+  usedCount Int       @default(0)
+  maxUses   Int       @default(0)
+  expiresAt DateTime?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation("userReferralCodes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([userId])
+  @@index([active])
+  @@index([createdAt])
+  @@map("referral_codes")
+}
+
+
+model Device {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  brand      String
+  model      String
+  deviceType String   @default("phone")
+  isActive   Boolean  @default(true)
+  carrier    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation("userDevices", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("devices")
+}
+
+model ChatSession {
+  id            String           @id @default(cuid())
+  userId        String?
+  channel       String           @default("public")
+  status        String           @default("active")
+  title         String?
+  context       Json?
+  lastMessageAt DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user        User?            @relation("userChatSessions", fields: [userId], references: [id], onDelete: SetNull)
+  messages    ChatMessage[]
+  feedback    ChatFeedback[]
+  escalations ChatEscalation[]
+
+  @@index([userId])
+  @@index([channel])
+  @@index([status])
+  @@index([createdAt])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id          String      @id @default(cuid())
+  sessionId   String
+  userId      String?
+  role        String
+  content     String
+  citations   Json?
+  actions     Json?
+  toolName    String?
+  toolResult  Json?
+  model       String?
+  inputTokens Int?
+  outputTokens Int?
+  latencyMs   Int?
+  createdAt   DateTime    @default(now())
+
+  user    User?       @relation("userChatMessages", fields: [userId], references: [id], onDelete: SetNull)
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([role])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+model ChatFeedback {
+  id        String      @id @default(cuid())
+  sessionId String
+  messageId String?
+  userId    String?
+  rating    String
+  comment   String?
+  createdAt DateTime    @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User?       @relation("userChatFeedback", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("chat_feedback")
+}
+
+model ChatEscalation {
+  id              String      @id @default(cuid())
+  sessionId       String
+  userId          String?
+  supportTicketId String?
+  reason          String
+  status          String      @default("open")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User?       @relation("userChatEscalations", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("chat_escalations")
+}
+
+
+model Agent {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  name               String
+  email              String   @unique
+  status             String   @default("offline")
+  department         String   @default("support")
+  maxConcurrentChats Int      @default(5)
+  currentChatCount   Int      @default(0)
+  businessHoursFrom  String? 
+  businessHoursTo    String? 
+  timezone           String   @default("UTC")
+  avatar             String?
+  isActive           Boolean  @default(true)
+  totalChats         Int      @default(0)
+  avgResponseTime    Int?    
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  cannedResponses    CannedResponse[]
+
+  @@index([status])
+  @@index([isActive])
+  @@index([department])
+  @@index([currentChatCount])
+  @@map("agents")
+}
+
+model LiveChatSession {
+  id             String   @id @default(cuid())
+  userId         String
+  agentId        String? 
+  lunaSessionId  String? 
+  status         String   @default("queued")
+  reason         String? 
+  waitStartedAt  DateTime?
+  assignedAt     DateTime?
+  startedAt      DateTime?
+  closedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user      User                @relation("userLiveChats", fields: [userId], references: [id], onDelete: Cascade)
+  messages  LiveChatMessage[]
+  queue     AgentQueue?
+  feedback  LiveChatFeedback?
+  typingIndicators TypingIndicator[]
+
+  @@index([userId])
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@map("live_chat_sessions")
+}
+
+model LiveChatMessage {
+  id           String   @id @default(cuid())
+  sessionId    String
+  senderId     String  
+  senderRole   String  
+  content      String
+  attachments  Json?   
+  readAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  session LiveChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([createdAt])
+  @@index([readAt])
+  @@map("live_chat_messages")
+}
+
+model AgentQueue {
+  id                    String   @id @default(cuid())
+  sessionId             String   @unique
+  agentId               String? 
+  positionInQueue       Int
+  waitingSince          DateTime @default(now())
+  estimatedWaitTimeMs   Int?
+  assignedAt            DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  session LiveChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([positionInQueue])
+  @@index([agentId])
+  @@index([waitingSince])
+  @@map("agent_queues")
+}
+
+model CannedResponse {
+  id        String   @id @default(cuid())
+  agentId   String? 
+  title     String
+  content   String
+  category  String   @default("general")
+  shortcut  String? 
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agent Agent? @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([category])
+  @@index([shortcut])
+  @@map("canned_responses")
+}
+
+model LiveChatFeedback {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique
+  userId      String
+  rating      Int     
+  comment     String?
+  categories  String[]
+  createdAt   DateTime @default(now())
+
+  session LiveChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("live_chat_feedback")
+}
+
+model TypingIndicator {
+  id        String   @id @default(cuid())
+  sessionId String
+  senderId  String
+  senderRole String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  session LiveChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([expiresAt])
+  @@map("typing_indicators")
+}
+
+model KnowledgeDocument {
+  id          String           @id @default(cuid())
+  sourceType  String
+  title       String
+  slug        String           @unique
+  content     String
+  metadata    Json?
+  isPublished Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  chunks KnowledgeChunk[]
+
+  @@index([sourceType])
+  @@index([isPublished])
+  @@index([updatedAt])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id         String            @id @default(cuid())
+  documentId String
+  chunkIndex Int
+  chunkText  String
+  keywords   String[]
+  metadata   Json?
+  createdAt  DateTime          @default(now())
+
+  document KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([chunkIndex])
+  @@index([createdAt])
+  @@map("knowledge_chunks")
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+
+model AutoEmailTemplate {
+  id              String   @id @default(cuid())
+  title           String   @unique
+  subject         String
+  contentTemplate String  
+  aiPrompt        String? 
+  createdBy       String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  schedules AutoEmailSchedule[]
+  logs      EmailLog[]
+  abTestsAsA EmailAbTest[] @relation("abTestTemplateA")
+  abTestsAsB EmailAbTest[] @relation("abTestTemplateB")
+
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("auto_email_templates")
+}
+
+model AutoEmailSchedule {
+  id             String   @id @default(cuid())
+  userId         String
+  templateId     String
+  scheduledFor   DateTime
+  sentAt         DateTime?
+  status         String   @default("pending")
+  draftContent   String? 
+  draftReviewedAt DateTime?
+  draftReviewedBy String? 
+  abTestId        String? 
+  abVariant       String? 
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template AutoEmailTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  abTest   EmailAbTest?      @relation(fields: [abTestId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([templateId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([sentAt])
+  @@index([abTestId])
+  @@map("auto_email_schedules")
+}
+
+model EmailLog {
+  id           String    @id @default(cuid())
+  userId       String
+  templateId   String
+  subject      String
+  content      String   
+  sentAt       DateTime  @default(now())
+  openedAt     DateTime?
+  clickedAt    DateTime?
+  unsubscribedAt DateTime?
+  bounced      Boolean   @default(false)
+  bouncedAt    DateTime?
+  unsubscribeToken String?
+  
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template AutoEmailTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([templateId])
+  @@index([sentAt])
+  @@index([openedAt])
+  @@index([unsubscribedAt])
+  @@index([bounced])
+  @@map("email_logs")
+}
+
+model EmailAbTest {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  templateAId  String
+  templateBId  String
+  splitRatio   Float    @default(0.5)
+  status       String   @default("draft")
+  startedAt    DateTime?
+  completedAt  DateTime?
+  winnerVariant String? 
+  createdBy    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  templateA AutoEmailTemplate @relation("abTestTemplateA", fields: [templateAId], references: [id])
+  templateB AutoEmailTemplate @relation("abTestTemplateB", fields: [templateBId], references: [id])
+  schedules AutoEmailSchedule[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_ab_tests")
+}
+
+model EmailSegment {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  rules       Json    
+  isActive    Boolean  @default(true)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("email_segments")
+}
+
+model IntegrationWebhook {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  secret    String  
+  events    String[]
+  isActive  Boolean  @default(true)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries IntegrationWebhookDelivery[]
+
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("integration_webhooks")
+}
+
+model IntegrationWebhookDelivery {
+  id         String   @id @default(cuid())
+  webhookId  String
+  event      String
+  payload    Json
+  statusCode Int?
+  success    Boolean  @default(false)
+  error      String?
+  createdAt  DateTime @default(now())
+
+  webhook IntegrationWebhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([event])
+  @@index([createdAt])
+  @@map("integration_webhook_deliveries")
+}
+
+model BlogPost {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  excerpt         String
+  content         String  
+  featuredImage   String? 
+  category        String  
+  status          String   @default("draft")
+  featured        Boolean  @default(false)
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  createdBy       String
+  updatedBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  viewCount       Int      @default(0)
+  authors         BlogAuthor[]
+  creator         User     @relation("userBlogPosts", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([featured])
+  @@index([category])
+  @@index([createdBy])
+  @@map("blog_posts")
+}
+
+model BlogAuthor {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation("userBlogAuthors", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("blog_authors")
+}
+

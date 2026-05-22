@@ -1,0 +1,118 @@
+version: '3.9'
+
+# ═══════════════════════════════════════════════════════════════
+# Velox eSIM — Docker Compose
+# ═══════════════════════════════════════════════════════════════
+#
+#  Services:
+#    postgres  – PostgreSQL 15 database          → localhost:5432
+#    redis     – Redis 7 cache / rate-limiter    → localhost:6379
+#    backend   – Express/TypeScript API          → localhost:5000
+#    frontend  – Next.js 15 UI                  → localhost:3000
+#
+#  Quick start:
+#    1. Copy .env.docker.example → .env.docker and fill in secrets
+#    2. docker compose up --build
+#
+#  Stop everything:
+#    docker compose down
+#
+#  Wipe database volume too:
+#    docker compose down -v
+# ═══════════════════════════════════════════════════════════════
+
+services:
+
+  # ─── PostgreSQL ───────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: velox
+      POSTGRES_PASSWORD: velox_pass
+      POSTGRES_DB: velox_esim
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U velox -d velox_esim"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─── Redis ────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ─── Backend (Express + Prisma) ───────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    # Secrets and API keys from .env.docker (not committed to git)
+    env_file:
+      - .env.docker
+    # These override anything in .env.docker for Docker-internal networking
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      HOST: "0.0.0.0"
+      # Use Docker service names as hostnames (not localhost)
+      DATABASE_URL: postgresql://velox:velox_pass@postgres:5432/velox_esim
+      REDIS_URL: redis://redis:6379
+      # Public-facing URLs (as seen from a browser)
+      API_URL: http://localhost:5000
+      FRONTEND_URL: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # prisma db push syncs the schema then the compiled server starts
+    command: >
+      sh -c "npx prisma db push --skip-generate && node dist/index.js"
+
+  # ─── Frontend (Next.js) ───────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* vars are inlined at build time by Next.js
+        NEXT_PUBLIC_API_URL: http://localhost:5000
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+        NEXT_PUBLIC_APP_NAME: "Velox eSIM"
+        # Pass Stripe publishable key from .env.docker (it's public — safe as build arg)
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.docker
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:5000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: "Velox eSIM"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+# ─── Named volumes ────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local

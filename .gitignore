@@ -1,0 +1,6 @@
+# Docker secrets — never commit
+.env.docker
+
+# OS
+.DS_Store
+Thumbs.db
