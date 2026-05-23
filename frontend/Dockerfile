@@ -2,9 +2,9 @@
 # Velox eSIM — Frontend Dockerfile  (multi-stage, Next.js 15)
 # ═══════════════════════════════════════════════════════════════
 #
-#  Stage 1 "deps"     – install node_modules
+#  Stage 1 "deps"     – install all node_modules (needed for build)
 #  Stage 2 "builder"  – run next build
-#  Stage 3 "runner"   – minimal image that serves the built app
+#  Stage 3 "runner"   – minimal image with prod-only deps
 # ═══════════════════════════════════════════════════════════════
 
 # ─── Stage 1: Install dependencies ──────────────────────────────
@@ -15,6 +15,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package*.json ./
+# .npmrc sets legacy-peer-deps=true — must be present BEFORE npm ci
+COPY .npmrc* ./
+
 RUN npm ci
 
 # ─── Stage 2: Build Next.js app ─────────────────────────────────
@@ -55,20 +58,23 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && \
     adduser  --system --uid 1001 nextjs
 
-# Copy built assets and dependencies from builder
+# Install production dependencies only (no devDeps — keeps image lean)
+COPY package*.json ./
+COPY .npmrc* ./
+RUN npm ci --omit=dev
+
+# Copy built assets from builder
 COPY --from=builder /app/.next  ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
 
-# Own the files as nextjs user
+# Own the Next.js build output as nextjs user
 RUN chown -R nextjs:nodejs /app/.next
 
 USER nextjs
 
 EXPOSE 3000
 
-# Health check
+# Health check — wait 30s for Next.js to start before checking
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD node -e "\
     require('http').get('http://localhost:3000', (r) => { \
