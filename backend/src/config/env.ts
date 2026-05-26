@@ -9,6 +9,7 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
 
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  DB_SSL_MODE: z.enum(['disable', 'prefer', 'require']).default('prefer'),
 
   JWT_SECRET: z.string().min(8, 'JWT_SECRET must be at least 8 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
@@ -78,6 +79,7 @@ export const config = {
 };
 export const secrets = {
   database_url: validatedEnv.DATABASE_URL,
+  db_ssl_mode: validatedEnv.DB_SSL_MODE,
   jwt_secret: validatedEnv.JWT_SECRET,
   sendgrid_api_key: validatedEnv.SENDGRID_API_KEY,
   stripe_secret_key: validatedEnv.STRIPE_SECRET_KEY,

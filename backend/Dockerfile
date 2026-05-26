@@ -71,5 +71,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     }).on('error', () => process.exit(1));"
 
 # Sync DB schema then start the compiled server
-# --skip-generate: DB push only, client was already generated in Stage 1
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push --url \"$DATABASE_URL\" && node dist/index.js"]

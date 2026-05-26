@@ -172,6 +172,20 @@ curl http://localhost:5000/health
 | `REDIS_URL` | `redis://redis:6379` | Uses Docker service hostname `redis` |
 | `NODE_ENV` | `production` | Set to production inside containers |
 
+### DB_SSL_MODE (local vs production)
+
+`DB_SSL_MODE` controls how the backend connects to PostgreSQL over TLS/SSL.
+
+| Value | Behavior | Recommended use |
+|------|----------|-----------------|
+| `disable` | Never use TLS | Local Docker Postgres (default setup in this repo) |
+| `prefer` | Try TLS first, fall back to non-TLS | Mixed/dev environments where SSL availability may vary |
+| `require` | Enforce TLS only (`rejectUnauthorized: true`) | Production databases with valid SSL certificates |
+
+For this Docker setup, `docker-compose.yml` sets `DB_SSL_MODE=disable` for the backend because the local `postgres:15-alpine` container does not expose SSL by default.
+
+For production, use `DB_SSL_MODE=require` and point `DATABASE_URL` to a managed PostgreSQL instance with SSL enabled.
+
 ### Variables you must configure in `.env.docker`
 
 | Variable | Required | Description |
@@ -321,6 +335,22 @@ This usually means the backend container started before PostgreSQL was fully rea
 ```bash
 docker compose restart backend
 ```
+
+### Prisma error `P1011` / `The server does not support SSL connections`
+
+This means the backend is trying to use TLS against a PostgreSQL server that does not have SSL enabled (common with local Docker Postgres).
+
+For local Docker in this repo, set:
+
+- `DB_SSL_MODE=disable`
+
+The default `docker-compose.yml` already sets this for the backend service. After changing SSL settings, restart backend:
+
+```bash
+docker compose up -d --no-deps --build backend
+```
+
+For production, use `DB_SSL_MODE=require` with an SSL-enabled managed PostgreSQL instance.
 
 ### Port already in use
 

@@ -73,6 +73,7 @@ services:
       HOST: "0.0.0.0"
       # Use Docker service names as hostnames (not localhost)
       DATABASE_URL: postgresql://velox:velox_pass@postgres:5432/velox_esim
+      DB_SSL_MODE: disable
       REDIS_URL: redis://redis:6379
       # Public-facing URLs (as seen from a browser)
       API_URL: http://localhost:5000
@@ -84,7 +85,7 @@ services:
         condition: service_healthy
     # prisma db push syncs the schema then the compiled server starts
     command: >
-      sh -c "npx prisma db push --skip-generate && node dist/index.js"
+      sh -c "npx prisma db push --url \"$$DATABASE_URL\" && node dist/index.js"
 
   # ─── Frontend (Next.js) ───────────────────────────────────────
   frontend:
