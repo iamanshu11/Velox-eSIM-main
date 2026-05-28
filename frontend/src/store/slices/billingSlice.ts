@@ -27,7 +27,7 @@ export const billingSlice = apiSlice.injectEndpoints({
     }),
 
     getBillingStats: builder.query<BillingStats, void>({
-      query: () => '/payments/billing/stats',
+      query: () => '/payments/billing/summary',
       transformResponse: (response: any) => response.data,
       providesTags: ['Billing'],
     }),

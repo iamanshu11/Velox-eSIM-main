@@ -536,29 +536,62 @@ router.post(
         );
       }
 
-      logger.debug(`[eSIM Purchase] Creating order for user ${userId}`);
-      const orderResult = await esimAccessService.placeOrder({
-        amount,
-        packageInfoList,
-      });
-
-      if (!orderResult || !orderResult.orderNo) {
-        throw new Error("Failed to create order on eSIMaccess API");
-      }
-
+      // Deduct wallet FIRST so funds are reserved before the external API call.
+      // If the eSIMaccess order fails we refund immediately in the catch block.
       logger.debug(
         `[eSIM Purchase] Deducting $${amountInDollars} from wallet for user ${userId}`,
       );
+      const PENDING_REFERENCE = `PENDING-ESIM-PURCHASE:${userId}:${Date.now()}`;
       const updatedWallet = await walletService.deductFunds(
         userId,
         amountInDollars,
-        orderResult.orderNo,
+        PENDING_REFERENCE,
         {
           packageCount: packageInfoList.length,
           userEmail,
-          esimOrderNo: orderResult.orderNo,
+          status: "pending_esim_order",
         },
       );
+
+      let orderResult: { orderNo: string; transactionId: string };
+      try {
+        logger.debug(`[eSIM Purchase] Creating order for user ${userId}`);
+        orderResult = await esimAccessService.placeOrder({
+          amount,
+          packageInfoList,
+        });
+
+        if (!orderResult || !orderResult.orderNo) {
+          throw new Error("Failed to create order on eSIMaccess API");
+        }
+      } catch (apiError) {
+        // External order failed — refund the wallet immediately
+        const apiErrMsg =
+          apiError instanceof Error ? apiError.message : "eSIMaccess API error";
+        logger.error(
+          `[eSIM Purchase] eSIMaccess order failed, refunding $${amountInDollars} to user ${userId}:`,
+          apiErrMsg,
+        );
+        try {
+          await walletService.addFunds(
+            userId,
+            amountInDollars,
+            `REFUND-${PENDING_REFERENCE}`,
+            PENDING_REFERENCE,
+          );
+        } catch (refundError) {
+          logger.error(
+            `[eSIM Purchase] CRITICAL: Refund failed for user ${userId} after API error. Manual intervention required.`,
+            refundError,
+          );
+        }
+        return sendError(
+          res,
+          "Failed to place eSIM order",
+          apiErrMsg,
+          statusCode.INTERNAL_SERVER_ERROR,
+        );
+      }
 
       logger.debug(
         `[eSIM Purchase] Order created: ${orderResult.orderNo}, New wallet balance: $${updatedWallet.balance}`,

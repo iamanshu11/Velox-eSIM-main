@@ -32,9 +32,25 @@ const envSchema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional().default(''),
   TWILIO_PHONE_NUMBER: z.string().optional().default(''),
 
+  // eSIM provider credentials (seeded into Settings DB table on startup)
   ESIM_ACCESS_CODE: z.string().optional().default(''),
-  ESIM_API_KEY: z.string().optional().default(''),
   ESIM_SECRET_KEY: z.string().optional().default(''),
+
+  // Cloudinary (image uploads)
+  CLOUDINARY_CLOUD_NAME: z.string().optional().default(''),
+  CLOUDINARY_API_KEY: z.string().optional().default(''),
+  CLOUDINARY_API_SECRET: z.string().optional().default(''),
+
+  // CRM server-to-server shared API key
+  CRM_API_KEY: z.string().optional().default(''),
+
+  // Rate limiting
+  RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number),
+  RATE_LIMIT_MAX_REQUESTS: z.string().default('100').transform(Number),
+
+  // Logging
+  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+  LOG_FILE: z.string().optional().default('./logs/server.log'),
 
   CHAT_FEATURE_ENABLED: z.string().default('true').transform((value) => value === 'true'),
   AI_PROVIDER: z.string().default('openai-compatible'),
@@ -72,6 +88,12 @@ export const config = {
 
   jwt_expires_in: validatedEnv.JWT_EXPIRES_IN,
 
+  rate_limit_window_ms: validatedEnv.RATE_LIMIT_WINDOW_MS,
+  rate_limit_max_requests: validatedEnv.RATE_LIMIT_MAX_REQUESTS,
+
+  log_level: validatedEnv.LOG_LEVEL,
+  log_file: validatedEnv.LOG_FILE,
+
   chat_feature_enabled: validatedEnv.CHAT_FEATURE_ENABLED,
   ai_provider: validatedEnv.AI_PROVIDER,
   ai_base_url: validatedEnv.AI_BASE_URL,
@@ -91,8 +113,11 @@ export const secrets = {
   twilio_auth_token: validatedEnv.TWILIO_AUTH_TOKEN,
   twilio_phone_number: validatedEnv.TWILIO_PHONE_NUMBER,
   esim_access_code: validatedEnv.ESIM_ACCESS_CODE,
-  esim_api_key: validatedEnv.ESIM_API_KEY,
   esim_secret_key: validatedEnv.ESIM_SECRET_KEY,
+  cloudinary_cloud_name: validatedEnv.CLOUDINARY_CLOUD_NAME,
+  cloudinary_api_key: validatedEnv.CLOUDINARY_API_KEY,
+  cloudinary_api_secret: validatedEnv.CLOUDINARY_API_SECRET,
+  crm_api_key: validatedEnv.CRM_API_KEY,
   ai_api_key: validatedEnv.AI_API_KEY,
 };
 export default config;

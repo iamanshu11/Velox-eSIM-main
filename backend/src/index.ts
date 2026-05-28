@@ -22,7 +22,7 @@ import dotenv from "dotenv";
 import http from "http";
 dotenv.config({ path: resolve(__dirname, "../.env") });
 
-import { config } from "@config/env";
+import { config, secrets } from "@config/env";
 import logger from "@utils/logger";
 import { errorMiddleware } from "@middleware/errorHandler";
 import { requestLogger, corsMiddleware } from "@middleware/common";
@@ -132,11 +132,36 @@ const server = httpServer.listen(PORT, "0.0.0.0", async () => {
     await db.$queryRaw`SELECT 1`;
     logger.success('[STARTUP] ✓ Database connection successful');
 
+    // Seed eSIM credentials from env vars into Settings if not already set via admin UI
+    try {
+      if (secrets.esim_access_code || secrets.esim_secret_key) {
+        const existing = await db.settings.findFirst();
+        const alreadySet = existing?.esimAccessCode?.trim() || existing?.esimSecretKey?.trim();
+
+        if (!alreadySet) {
+          const credData = {
+            esimAccessCode: secrets.esim_access_code,
+            esimSecretKey: secrets.esim_secret_key,
+          };
+          if (existing) {
+            await db.settings.update({ where: { id: existing.id }, data: credData });
+          } else {
+            await db.settings.create({ data: credData });
+          }
+          logger.success('[STARTUP] ✓ eSIM credentials seeded from environment variables');
+        }
+      }
+    } catch (seedError) {
+      logger.warn('[STARTUP] ⚠️ Could not seed eSIM credentials:',
+        seedError instanceof Error ? seedError.message : String(seedError)
+      );
+    }
+
     try {
       initializeCronJobs();
       logger.success('[STARTUP] ✓ Email automation cron jobs initialized');
     } catch (cronError) {
-      logger.error('[STARTUP] ⚠️ Failed to initialize cron jobs:', 
+      logger.error('[STARTUP] ⚠️ Failed to initialize cron jobs:',
         cronError instanceof Error ? cronError.message : String(cronError)
       );
     }

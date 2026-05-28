@@ -71,49 +71,48 @@ router.post(
     });
   })
 );
-router.get(
-  '/credentials/verify',
-  authenticate,
-  authorize('ADMIN'),
-  asyncHandler(async (_req: Request, res: Response) => {
-    try {
-      const settings = await settingsService.getSettings();
-      
-      if (!settings.esimAccessCode || !settings.esimSecretKey) {
-        return sendSuccess(res, 'Credentials not configured', {
-          valid: false,
-          message: 'No credentials configured. Please set credentials first.',
-        });
-      }
+const verifyCredentialsHandler = asyncHandler(async (_req: Request, res: Response) => {
+  try {
+    const settings = await settingsService.getSettings();
 
-      try {
-        logger.info('[Verify] Testing credentials with eSIMaccess API...');
-        const balance = await esimAccessService.getAccountBalance();
-        
-        logger.success('[Verify] Credentials verified successfully', { balance: balance.balance / 10000 });
-        return sendSuccess(res, 'Credentials are valid', {
-          valid: true,
-          message: 'Successfully connected to eSIMaccess API',
-          balance: balance.balance / 10000,
-        });
-      } catch (apiError: unknown) {
-        const error = apiError instanceof Error ? apiError : new Error(String(apiError));
-        logger.error('[Verify] API validation failed', error);
-        return sendSuccess(res, 'Credentials are invalid', {
-          valid: false,
-          message: `Failed to validate with eSIMaccess API: ${error.message}`,
-        });
-      }
-    } catch (error) {
-      return sendError(
-        res,
-        'Failed to verify credentials',
-        error instanceof Error ? error.message : 'Unknown error',
-        statusCode.INTERNAL_SERVER_ERROR
-      );
+    if (!settings.esimAccessCode || !settings.esimSecretKey) {
+      return sendSuccess(res, 'Credentials not configured', {
+        valid: false,
+        message: 'No credentials configured. Please set credentials first.',
+      });
     }
-  })
-);
+
+    try {
+      logger.info('[Verify] Testing credentials with eSIMaccess API...');
+      const balance = await esimAccessService.getAccountBalance();
+
+      logger.success('[Verify] Credentials verified successfully', { balance: balance.balance / 10000 });
+      return sendSuccess(res, 'Credentials are valid', {
+        valid: true,
+        message: 'Successfully connected to eSIMaccess API',
+        balance: balance.balance / 10000,
+      });
+    } catch (apiError: unknown) {
+      const error = apiError instanceof Error ? apiError : new Error(String(apiError));
+      logger.error('[Verify] API validation failed', error);
+      return sendSuccess(res, 'Credentials are invalid', {
+        valid: false,
+        message: `Failed to validate with eSIMaccess API: ${error.message}`,
+      });
+    }
+  } catch (error) {
+    return sendError(
+      res,
+      'Failed to verify credentials',
+      error instanceof Error ? error.message : 'Unknown error',
+      statusCode.INTERNAL_SERVER_ERROR
+    );
+  }
+});
+
+// Accept both GET (direct browser/curl access) and POST (frontend SDK call)
+router.get('/credentials/verify', authenticate, authorize('ADMIN'), verifyCredentialsHandler);
+router.post('/credentials/verify', authenticate, authorize('ADMIN'), verifyCredentialsHandler);
 router.delete(
   '/credentials',
   authenticate,

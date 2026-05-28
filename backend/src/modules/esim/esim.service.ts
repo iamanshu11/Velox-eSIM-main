@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { createHash } from "crypto";
 import prisma from "@config/database";
 import { AppError } from "@utils/errors";
 import logger from "@utils/logger";
@@ -326,13 +327,29 @@ const initializeClient = async (): Promise<AxiosInstance> => {
     );
   }
 
+  const accessCode = settings.esimAccessCode;
+  const secretKey = settings.esimSecretKey || "";
+
   apiClient = axios.create({
     baseURL: BASE_URL,
     headers: {
       "Content-Type": "application/json",
-      "RT-AccessCode": settings.esimAccessCode,
+      "RT-AccessCode": accessCode,
     },
     timeout: 30000,
+  });
+
+  // Add per-request signing interceptor (eSIMaccess requires MD5 auth signature)
+  apiClient.interceptors.request.use((config) => {
+    if (secretKey) {
+      const timestamp = Date.now().toString();
+      const signature = createHash("md5")
+        .update(`${accessCode}${secretKey}${timestamp}`)
+        .digest("hex");
+      config.headers["RT-RequestTimestamp"] = timestamp;
+      config.headers["RT-Signature"] = signature;
+    }
+    return config;
   });
 
   return apiClient;
@@ -1485,10 +1502,12 @@ async getPopularPackages(limit: number = 12) {
       const popularPackages = topPackageCodes
         .map(code => {
           const pkg = allPackages.find(p => p.packageCode === code);
+          const wholesaleCents = pkg ? Math.round(pkg.price / 100) : 0;
           return {
             ...pkg,
             purchaseCount: packageCounts[code],
-            price: pkg ? Math.round(pkg.price * profitMargin) : 0,
+            wholesalePrice: wholesaleCents,
+            price: pkg ? Math.round(wholesaleCents * profitMargin) : 0,
           };
         })
         .filter(pkg => pkg.packageCode);
@@ -1499,12 +1518,16 @@ async getPopularPackages(limit: number = 12) {
           .filter(pkg => !usedCodes.has(pkg.packageCode))
           .sort((a, b) => (a.price || 0) - (b.price || 0))
           .slice(0, limit - popularPackages.length)
-          .map(pkg => ({
-            ...pkg,
-            purchaseCount: 0,
-            price: pkg ? Math.round(pkg.price * profitMargin) : 0,
-          }));
-        
+          .map(pkg => {
+            const wholesaleCents = Math.round(pkg.price / 100);
+            return {
+              ...pkg,
+              purchaseCount: 0,
+              wholesalePrice: wholesaleCents,
+              price: Math.round(wholesaleCents * profitMargin),
+            };
+          });
+
         return [...popularPackages, ...additionalPackages];
       }
 
@@ -1516,16 +1539,20 @@ async getPopularPackages(limit: number = 12) {
         const { settingsService } = await import('@modules/settings/settings.service');
         const settings = await settingsService.getSettings();
         const profitMargin = settings?.profitMargin || 1.5;
-        
+
         return Array.isArray(allPackages)
           ? allPackages
               .sort((a, b) => (a.price || 0) - (b.price || 0))
               .slice(0, limit)
-              .map(pkg => ({
-                ...pkg,
-                purchaseCount: 0,
-                price: pkg ? Math.round(pkg.price * profitMargin) : 0,
-              }))
+              .map(pkg => {
+                const wholesaleCents = Math.round(pkg.price / 100);
+                return {
+                  ...pkg,
+                  purchaseCount: 0,
+                  wholesalePrice: wholesaleCents,
+                  price: Math.round(wholesaleCents * profitMargin),
+                };
+              })
           : [];
       } catch {
         return [];
@@ -1592,10 +1619,12 @@ async getPopularPackages(limit: number = 12) {
             packagesByRegion[regionName] = packages
               .sort((a, b) => (a.price as number) - (b.price as number))
               .map(pkg => {
-                const basePrice = (pkg.price as number) > 1000 ? pkg.price / 100 : pkg.price;
-                const newPrice = Math.round(basePrice * profitMargin);
+                // API price is in 1/10000 USD units; divide by 100 → cents, then apply margin
+                const wholesaleCents = Math.round((pkg.price as number) / 100);
+                const newPrice = Math.round(wholesaleCents * profitMargin);
                 return {
                   ...pkg,
+                  wholesalePrice: wholesaleCents,
                   price: newPrice,
                   region: regionName,
                 };

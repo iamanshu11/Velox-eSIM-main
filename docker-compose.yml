@@ -62,7 +62,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "5002:5000"
     # Secrets and API keys from .env.docker (not committed to git)
     env_file:
       - .env.docker
@@ -76,7 +76,7 @@ services:
       DB_SSL_MODE: disable
       REDIS_URL: redis://redis:6379
       # Public-facing URLs (as seen from a browser)
-      API_URL: http://localhost:5000
+      API_URL: http://localhost:5002
       FRONTEND_URL: http://localhost:3000
     depends_on:
       postgres:
@@ -94,7 +94,7 @@ services:
       dockerfile: Dockerfile
       args:
         # NEXT_PUBLIC_* vars are inlined at build time by Next.js
-        NEXT_PUBLIC_API_URL: http://localhost:5000
+        NEXT_PUBLIC_API_URL: http://localhost:5002
         NEXT_PUBLIC_APP_URL: http://localhost:3000
         NEXT_PUBLIC_APP_NAME: "Velox eSIM"
         # Pass Stripe publishable key from .env.docker (it's public — safe as build arg)
@@ -106,7 +106,7 @@ services:
       - .env.docker
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://localhost:5000
+      NEXT_PUBLIC_API_URL: http://localhost:5002
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_APP_NAME: "Velox eSIM"
     depends_on:

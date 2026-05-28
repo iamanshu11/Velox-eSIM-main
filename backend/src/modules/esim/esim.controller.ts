@@ -34,16 +34,22 @@ export const getAccountSummary = asyncHandler(
   },
 );
 
-const applyProfitMarginToPackage = (pkg: DataPackage, margin: number): Record<string, unknown> => ({
-  ...pkg,
-  wholesalePrice: pkg.price,
-  price: Math.round((pkg.price as number) * margin),
-});
+// API returns price in 1/10000 USD units (10000 = $1.00).
+// Divide by 100 to convert to cents, then apply margin to get retail cents.
+const applyProfitMarginToPackage = (pkg: DataPackage, margin: number): Record<string, unknown> => {
+  const wholesaleCents = Math.round((pkg.price as number) / 100);
+  const retailCents = Math.round(wholesaleCents * margin);
+  return {
+    ...pkg,
+    wholesalePrice: wholesaleCents,
+    price: retailCents,
+  };
+};
 
 export const getAllDataPackages = asyncHandler(
   async (req: Request, res: Response) => {
     const { country, limit = 20, page = 1 } = req.query;
-    
+
     if (!country || typeof country !== 'string') {
       return sendError(res, 'Country code is required', undefined, 400);
     }
