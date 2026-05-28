@@ -1,6 +1,7 @@
 "use client";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import AdminHeader from "@/components/AdminHeader";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { apiClient } from "@/lib/apiClient";
 import { BackendApiResponse } from "@/types/api";
@@ -286,6 +287,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop Header */}
+          <div className="hidden lg:block">
+            <AdminHeader />
+          </div>
+
           {/* Mobile Header */}
           <motion.header
             initial={{ y: -20, opacity: 0 }}
@@ -304,12 +310,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <div className="w-10" />
           </motion.header>
 
-          {/* Page Content */}
+          {/* Page Content — pt-16 clears the fixed desktop header */}
           <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="flex-1 overflow-auto"
+            className="flex-1 overflow-auto lg:pt-16"
           >
             <div className="lg:p-8 p-4 bg-primary-50 min-h-full">
               <div className="max-w-7xl mx-auto">

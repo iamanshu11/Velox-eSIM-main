@@ -1,105 +1,174 @@
 'use client';
 
-import React, { useState } from 'react';
+import { Bell, LogOut, Settings, User } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { Bell, Search, User, Settings, LogOut } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { authManager } from '@/lib/auth';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { logout as logoutAction } from '@/store/slices/authSlice';
+import { apiSlice } from '@/store/slices/apiSlice';
+import { apiClient } from '@/lib/apiClient';
+import SearchBar from '@/components/SearchBar';
 
-const AdminHeader: React.FC = () => {
-  const router = useRouter();
-  const user = authManager.getUser();
-  const [showDropdown, setShowDropdown] = useState(false);
+const AUTH_TAGS = [
+  'Wallet', 'Orders', 'eSIM', 'Analytics', 'Settings',
+  'Webhooks', 'Uploads', 'AutoRenewal', 'Billing', 'Referral', 'Auth',
+] as const;
 
-  const handleLogout = () => {
-    authManager.logout();
-    router.push('/login');
-  };
+export default function AdminHeader() {
+  const router   = useRouter();
+  const dispatch = useDispatch();
+  const user     = useSelector((state: RootState) => state.auth.user);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMenu]);
+
+  const handleLogout = useCallback(async () => {
+    setShowMenu(false);
+    try {
+      await apiClient.post<unknown>('/auth/logout', {});
+    } finally {
+      dispatch(apiSlice.util.invalidateTags([...AUTH_TAGS]));
+      dispatch(logoutAction());
+      router.push('/');
+    }
+  }, [dispatch, router]);
+
+  const initial = user?.email?.[0]?.toUpperCase() ?? 'A';
 
   return (
-    <header className="fixed top-0 right-0 left-0 lg:left-64 z-20 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      {/* Search Bar */}
-      <div className="hidden md:flex flex-1 max-w-md">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:border-primary-600 focus:outline-none transition-colors"
-          />
+    <motion.header
+      initial={{ y: -16, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      className="fixed top-0 right-0 left-0 lg:left-72 z-40 bg-white/90 backdrop-blur-md border-b border-neutral-200/80 shadow-[0_1px_0_rgba(0,0,0,0.04)]"
+    >
+      <div className="h-16 px-4 lg:px-6 flex items-center justify-between gap-4">
+
+        {/* Search */}
+        <div className="flex-1 min-w-0 max-w-lg">
+          <SearchBar />
         </div>
-      </div>
 
-      {/* Right Section */}
-      <div className="flex items-center gap-4 ml-auto">
-        {/* Notifications */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
-        </motion.button>
+        {/* Right controls */}
+        <div className="flex items-center gap-2 shrink-0">
 
-        {/* User Dropdown */}
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          {/* Notification bell */}
+          <button
+            aria-label="Notifications"
+            className="relative p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-              <User className="w-4 h-4 text-primary-700" />
-            </div>
-            <div className="hidden sm:block text-sm">
-              <p className="font-semibold text-gray-900">Admin</p>
-              <p className="text-gray-600 text-xs">{user?.email || 'admin@esim.com'}</p>
-            </div>
-          </motion.button>
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+          </button>
 
-          {/* Dropdown Menu */}
-          {showDropdown && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowDropdown(false)}
-              />
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"
-              >
-                <Link href="/admin/profile" className="w-full block">
-                  <button className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">
-                    <User className="w-4 h-4" />
-                    <span>Profile</span>
-                  </button>
-                </Link>
-                <Link href="/admin/settings" className="w-full block">
-                  <button className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">
-                    <Settings className="w-4 h-4" />
-                    <span>Admin Settings</span>
-                  </button>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors"
+          {/* Avatar / user menu */}
+          <div className="relative" ref={menuRef}>
+            <motion.button
+              onClick={() => setShowMenu((v) => !v)}
+              whileTap={{ scale: 0.94 }}
+              aria-label="Admin user menu"
+              aria-expanded={showMenu}
+              className="rounded-full ring-2 ring-transparent hover:ring-primary-200 transition-all duration-200 focus-visible:outline-none focus-visible:ring-primary-500"
+            >
+              {user?.avatar ? (
+                <Image
+                  src={user.avatar}
+                  alt={user.name ?? 'Avatar'}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800 flex items-center justify-center text-white font-bold text-sm">
+                  {initial}
+                </div>
+              )}
+            </motion.button>
+
+            <AnimatePresence>
+              {showMenu && (
+                <motion.div
+                  key="admin-user-menu"
+                  initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  className="absolute right-0 mt-2.5 w-60 bg-white rounded-2xl border border-neutral-200/80 shadow-[0_16px_48px_rgba(15,23,42,0.12)] z-50 overflow-hidden"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
-              </motion.div>
-            </>
-          )}
+                  {/* User info */}
+                  <div className="flex items-center gap-3 px-4 py-4 bg-gradient-to-r from-primary-50 to-primary-100/40 border-b border-primary-100/60">
+                    {user?.avatar ? (
+                      <Image
+                        src={user.avatar}
+                        alt={user.name ?? 'Avatar'}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-primary-200"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                        {initial}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
+                        {user?.name ?? user?.email ?? 'Administrator'}
+                      </p>
+                      <p className="text-xs text-gray-500 capitalize">
+                        {user?.role?.toLowerCase() ?? 'admin'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="py-1">
+                    <Link
+                      href="/admin/profile"
+                      onClick={() => setShowMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    >
+                      <User className="w-4 h-4 text-primary-600 shrink-0" />
+                      Profile
+                    </Link>
+                    <Link
+                      href="/admin/settings"
+                      onClick={() => setShowMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-primary-600 shrink-0" />
+                      Admin Settings
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-gray-100 py-1">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4 shrink-0" />
+                      Sign out
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
-};
-
-export default AdminHeader;
-
+}
