@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, ArrowRight, X, Zap, Globe, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import CountryFlagIcon from './CountryFlagIcon';
 import { apiClient } from '@/lib/apiClient';
 import { getAllCountries } from '@/lib/countryMap';
 import { motion } from 'framer-motion';
@@ -351,11 +350,15 @@ export default function SearchBar({ onSearch, className = '' }: SearchBarProps) 
                     className="w-full px-6 py-4 hover:bg-primary-50 transition-colors duration-200 border-b border-primary-100 last:border-b-0 flex items-center justify-between gap-4 text-left cursor-pointer group/item"
                   >
                     <div className="flex-1 flex items-center gap-4">
-                      <div className="relative">
-                        <CountryFlagIcon
-                          countryCode={plan.countryCode}
-                          size={40}
-                          className="shrink-0 rounded-lg"
+                      <div className="relative w-10 h-7 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                        <img
+                          src={`https://flagcdn.com/w160/${plan.countryCode.toLowerCase()}.png`}
+                          alt={`${plan.country} flag`}
+                          className="w-full h-full object-cover object-center"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">

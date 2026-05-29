@@ -110,12 +110,18 @@ const Header: React.FC = () => {
     }
   }, [dispatch, router]);
 
-  // Derive active nav item
+  // Derive active nav item — country slug pages and checkout count as /esim
+  const normalizedPathname = (() => {
+    if (pathname.startsWith('/checkout')) return '/esim';
+    if (pathname.endsWith('-esim') && !NAVIGATION_ITEMS.some(i => i.href === pathname)) return '/esim';
+    return pathname;
+  })();
+
   const activeHref =
     NAVIGATION_ITEMS.find(
       (item) =>
-        pathname === item.href ||
-        (item.href !== "/" && pathname.startsWith(item.href))
+        normalizedPathname === item.href ||
+        (item.href !== "/" && normalizedPathname.startsWith(item.href))
     )?.href ?? "/";
 
   const highlightedHref = hoveredHref ?? activeHref;
@@ -184,8 +190,9 @@ const Header: React.FC = () => {
                           "relative inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold",
                           "transition-colors duration-150 select-none",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
-                          active ? "text-white" : "text-slate-600 hover:text-slate-900",
+                          active ? "" : "text-slate-600",
                         ].join(" ")}
+                        style={{ color: active ? '#ffffff' : undefined }}
                       >
                         {active && (
                           <motion.span
@@ -194,7 +201,12 @@ const Header: React.FC = () => {
                             transition={{ type: "spring", stiffness: 380, damping: 32 }}
                           />
                         )}
-                        <span className="relative z-10">{item.label}</span>
+                        <span
+                          className="relative z-10"
+                          style={{ color: active ? '#ffffff' : undefined }}
+                        >
+                          {item.label}
+                        </span>
                       </Link>
                     </li>
                   );

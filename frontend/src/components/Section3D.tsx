@@ -16,7 +16,7 @@ export function Section3D({ children, className = '', id }: Section3DProps) {
       className={`relative perspective ${className}`}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-100px' }}
+      viewport={{ once: true, amount: 0 }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
       style={{ perspective: '1200px' }}
     >
@@ -34,7 +34,7 @@ export function Section3D({ children, className = '', id }: Section3DProps) {
           rotateY: -5,
           z: -50,
         }}
-        viewport={{ once: true, margin: '-100px' }}
+        viewport={{ once: true, amount: 0 }}
         transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
       >
         {children}

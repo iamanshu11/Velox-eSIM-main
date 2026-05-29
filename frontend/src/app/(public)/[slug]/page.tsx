@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Globe, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -159,6 +159,10 @@ export default function CountryPlansPage() {
         </Container>
       </div>
     );
+  }
+
+  if (!loading && (error?.toLowerCase().includes('not found') || (!currentCountry && !error))) {
+    notFound();
   }
 
   if (error || !currentCountry) {

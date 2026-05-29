@@ -1,152 +1,124 @@
 'use client';
 
-import AnimatedCounter from '@/components/AnimatedCounter';
-import SearchBar from '@/components/SearchBar';
-import { motion } from 'framer-motion';
-import { ArrowRight, Globe, Shield, Zap } from 'lucide-react';
+import React from 'react';
+import { ArrowRight, Signal, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import SearchBar from './SearchBar';
 
-const STATS = [
-  { icon: Globe, value: 150, suffix: '+', label: 'Countries Covered' },
-  { icon: Zap, value: 2, suffix: ' min', label: 'Instant Setup' },
-  { icon: Shield, value: 100, suffix: '%', label: 'Digital Only' },
+const AVATARS = [
+  { initials: 'JK', bg: 'from-[#fb3d77] to-[#d23284]' },
+  { initials: 'MR', bg: 'from-[#0058be] to-[#2170e4]' },
+  { initials: 'AS', bg: 'from-[#545c72] to-[#6c748b]' },
 ];
 
 const Hero: React.FC = () => {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.15 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 18 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] },
-    },
-  };
-
   return (
-    <div className="relative w-full min-h-svh overflow-visible">
-      {/* Full-screen background image */}
-      <Image
-        src="/images/hero.png"
-        alt="Global eSIM connectivity"
-        fill
-        priority
-        quality={95}
-        className="object-cover"
-      />
+    <section className="bg-mesh py-14 sm:py-20 md:py-28 overflow-hidden relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
 
-      {/* Animated radial glow */}
-      <motion.div
-        className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(circle 500px at 15% 55%, rgba(67,161,240,0.10) 0%, transparent 70%)',
-        }}
-        animate={{ opacity: [0.4, 0.75, 0.4] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-      />
+        {/* ── Left column ────────────────────────────────────────────────── */}
+        <div className="relative z-10 space-y-6 sm:space-y-8">
 
-      {/* Content */}
-      <div className="relative w-full min-h-svh flex z-10">
-        <motion.div
-          className="w-full lg:w-[45%] pt-28 sm:pt-32 lg:pt-36 pl-6 sm:pl-10 lg:pl-20 pr-6 sm:pr-10 flex flex-col justify-start pb-16"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+          {/* Live badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#d8e2ff] text-[#001a42]">
+            <span className="pulse-node w-2 h-2 rounded-full bg-[#0058be] inline-block" />
+            <span className="font-mono text-xs font-medium tracking-[0.05em] uppercase">
+              Global Connectivity Live
+            </span>
+          </div>
 
-          {/* Main headline */}
-          <motion.div variants={itemVariants} className="mb-5">
-            <p className="text-xs sm:text-sm font-bold text-primary-600 uppercase tracking-[0.15em] mb-3">
-              Finding Your Next Destination?
-            </p>
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black text-slate-950 leading-[1.1] tracking-tight">
-              Where Do You Need an
-              <span className="block text-primary-700 drop-shadow-sm mt-1">
-                eSIM Plan?
-              </span>
-            </h1>
-          </motion.div>
+          {/* Headline */}
+          <h1 className="font-sora text-4xl sm:text-5xl lg:text-[3.25rem] font-bold leading-[1.1] tracking-tight">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#fb3d77] to-[#0058be]">
+              Connectivity, Redefined.
+            </span>
+            <br />
+            <span className="text-[#191c1e]">Travel the world without limits.</span>
+          </h1>
 
-          {/* Subheadline */}
-          <motion.div variants={itemVariants} className="mb-7">
-            <p className="text-base sm:text-lg text-slate-600 font-medium max-w-lg leading-relaxed">
-              Search your destination and get instant eSIM activation — no physical SIM needed.
-            </p>
-          </motion.div>
+          {/* Subtext */}
+          <p className="text-[#574048] text-base sm:text-lg max-w-lg leading-relaxed">
+            Experience the next generation of mobile freedom. Instant activation,
+            enterprise-grade security, and 5G coverage across 190+ countries.
+            No physical cards, no roaming fees.
+          </p>
 
-          {/* Search bar */}
-          <motion.div variants={itemVariants} className="mb-6">
-            <SearchBar />
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div variants={itemVariants} className="mb-8 flex flex-wrap gap-3">
-            {STATS.map(({ icon: Icon, value, suffix, label }) => (
-              <div
-                key={label}
-                className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/75 backdrop-blur-sm border border-white/60 shadow-[0_8px_24px_rgba(15,23,42,0.07)]"
-              >
-                <div className="w-8 h-8 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-primary-600" />
-                </div>
-                <div>
-                  <p className="text-xl font-black text-primary-700 leading-none">
-                    <AnimatedCounter from={0} to={value} suffix={suffix} />
-                  </p>
-                  <p className="text-xs text-slate-500 font-semibold mt-0.5">{label}</p>
-                </div>
-              </div>
-            ))}
-          </motion.div>
+          {/* Country / destination search */}
+          <SearchBar />
 
           {/* CTA buttons */}
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
-            <Link href="/esim">
-              <motion.button
-                className="px-8 py-4 bg-primary-700 text-white font-bold text-base rounded-2xl shadow-[0_16px_40px_rgba(67,161,240,0.28)] hover:shadow-[0_20px_48px_rgba(67,161,240,0.34)] hover:bg-primary-800 transition-all duration-300 flex items-center gap-3 whitespace-nowrap"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span>Get Started</span>
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/esim" className="flex-shrink-0">
+              <button className="velox-btn-primary w-full sm:w-auto group">
+                Start Exploring Plans
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
             </Link>
-            <motion.button
-              className="px-8 py-4 bg-white/80 backdrop-blur-sm text-slate-800 font-bold text-base rounded-2xl shadow-[0_10px_28px_rgba(15,23,42,0.08)] hover:bg-white hover:shadow-[0_14px_36px_rgba(15,23,42,0.12)] transition-all duration-300 border border-white/70 whitespace-nowrap"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Learn More
-            </motion.button>
-          </motion.div>
+            <Link href="/device-compatibility" className="flex-shrink-0">
+              <button className="velox-btn-outline w-full sm:w-auto">
+                Check Compatibility
+              </button>
+            </Link>
+          </div>
 
-          {/* Micro trust note */}
-          <motion.p
-            variants={itemVariants}
-            className="mt-4 text-xs text-slate-500 font-medium"
-          >
-            No commitments · Instant activation · Works on any unlocked phone
-          </motion.p>
-        </motion.div>
+          {/* Social proof */}
+          <div className="flex items-center gap-6 pt-2">
+            <div className="flex -space-x-3">
+              {AVATARS.map((a, i) => (
+                <div
+                  key={i}
+                  className={`w-10 h-10 rounded-full border-2 border-white bg-gradient-to-br ${a.bg} flex items-center justify-center text-white text-xs font-bold`}
+                >
+                  {a.initials}
+                </div>
+              ))}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#191c1e]">Trusted by 2M+ travelers</p>
+              <div className="flex text-yellow-400 gap-0.5 mt-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right column — phone mockup ──────────────────────────────── */}
+        <div className="relative hidden lg:block">
+          {/* Ambient glow orbs */}
+          <div className="absolute -top-16 -right-16 w-72 h-72 bg-[#fb3d77]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-[#0058be]/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Glass phone card */}
+          <div className="relative glass-card p-4 rounded-[2rem] shadow-2xl rotate-2">
+            <Image
+              src="/images/hero.png"
+              alt="Velox eSIM — global connectivity"
+              width={560}
+              height={560}
+              priority
+              className="rounded-[1.5rem] w-full h-[420px] object-cover"
+            />
+
+            {/* Floating 5G chip */}
+            <div className="absolute top-1/2 -translate-y-1/2 -left-10 bg-white p-3.5 rounded-2xl shadow-xl border border-gray-100 -rotate-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#fb3d77]/10 flex items-center justify-center text-[#fb3d77]">
+                  <Signal className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-900">5G Active</p>
+                  <p className="text-[10px] text-gray-500">London, UK</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </section>
   );
 };
 

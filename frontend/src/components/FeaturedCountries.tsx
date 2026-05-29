@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Globe, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import CountryFlagIcon from './CountryFlagIcon';
 import { useGetCountriesAutocompleteQuery } from '@/store/slices/esimSlice';
 
 interface Country {
@@ -78,7 +77,7 @@ export default function FeaturedCountries() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, amount: 0 }}
         transition={{ duration: 0.5 }}
         className="text-center space-y-3"
       >
@@ -97,7 +96,7 @@ export default function FeaturedCountries() {
       <motion.div
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true }}
+        viewport={{ once: true, amount: 0 }}
         variants={containerVariants}
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
       >
@@ -122,16 +121,14 @@ export default function FeaturedCountries() {
 
                   {/* Circular Flag Badge */}
                   <div className="relative shrink-0">
-                    <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-sm">
-                      <CountryFlagIcon
-                        countryCode={country.code}
-                        size={120}
-                        className="w-full h-full object-cover"
+                    <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm bg-gray-100">
+                      <img
+                        src={`https://flagcdn.com/w160/${country.code.toLowerCase()}.png`}
+                        alt={`${country.name} flag`}
+                        className="w-full h-full object-cover object-center"
+                        loading="lazy"
                       />
                     </div>
-                    
-                    {/* Subtle overlay for dimension */}
-                    <div className="absolute inset-0 rounded-full bg-linear-to-br from-white/20 to-transparent pointer-events-none" />
                   </div>
 
                   {/* Content Section */}
@@ -168,7 +165,7 @@ export default function FeaturedCountries() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, amount: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
         className="flex justify-center pt-8"
       >

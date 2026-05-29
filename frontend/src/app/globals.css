@@ -119,7 +119,6 @@
 
 * {
   box-sizing: border-box;
-  border-color: var(--color-neutral-200) !important;
 }
 
 /* Enforce website-wide neutral borders.
@@ -128,13 +127,13 @@
 
 html {
   scroll-behavior: smooth;
-  background-color: #f0f7fe;
+  background-color: #f7f9fb;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-neutral-50);
+  background-color: #f7f9fb;
   color: var(--color-text);
   font-family: 'Inter', sans-serif;
 }
@@ -158,13 +157,7 @@ button:active:not(:disabled) {
 
 a {
   transition: color 0.3s ease, opacity 0.3s ease;
-  color: inherit;
   text-decoration: none;
-}
-
-a:hover {
-  color: inherit;
-  opacity: 0.8;
 }
 
 input, select, textarea {
@@ -425,4 +418,66 @@ input[type='number'] {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* ── Lumina Cyber design utilities ────────────────────────────────────────── */
+
+.font-sora {
+  font-family: var(--font-sora), 'Sora', system-ui, sans-serif;
+}
+
+.bg-mesh {
+  background-color: #f7f9fb;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(251, 61, 119, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(0, 88, 190, 0.06) 0px, transparent 50%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes pulse-node-anim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.25); }
+}
+
+.pulse-node {
+  animation: pulse-node-anim 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.velox-btn-primary {
+  background-color: #fb3d77;
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  padding: 1rem 2rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.velox-btn-primary:hover {
+  box-shadow: 0 20px 40px rgba(251, 61, 119, 0.3);
+  transform: translateY(-1px);
+}
+
+.velox-btn-outline {
+  border: 2px solid #0058be;
+  color: #0058be;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  padding: 1rem 2rem;
+  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.velox-btn-outline:hover {
+  background-color: rgba(0, 88, 190, 0.05);
 }

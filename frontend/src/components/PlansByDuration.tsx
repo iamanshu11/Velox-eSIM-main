@@ -103,7 +103,7 @@ export function PlansByDuration({ plans, onSelectPlan }: PlansByDurationProps) {
     <motion.div
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true }}
+      viewport={{ once: true, amount: 0 }}
       variants={containerVariants}
       className="space-y-20"
     >
@@ -156,7 +156,7 @@ export function PlansByDuration({ plans, onSelectPlan }: PlansByDurationProps) {
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0 }}
               transition={{ delay: 0.1 }}
               className="rounded-3xl border border-gray-200 overflow-hidden bg-white shadow-sm hover:shadow-lg transition-shadow duration-300"
             >
@@ -179,7 +179,7 @@ export function PlansByDuration({ plans, onSelectPlan }: PlansByDurationProps) {
                     key={plan.packageCode}
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: true, amount: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     className="p-8 md:p-0 grid md:grid-cols-5 gap-6 md:gap-0 items-center hover:bg-primary-50/30 transition-colors duration-200 group"
                   >
@@ -260,7 +260,7 @@ export function PlansByDuration({ plans, onSelectPlan }: PlansByDurationProps) {
               <motion.div
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, amount: 0 }}
                 className="mt-6 p-4 rounded-xl bg-yellow-50 border border-yellow-200"
               >
                 <p className="text-sm text-yellow-900 font-semibold">

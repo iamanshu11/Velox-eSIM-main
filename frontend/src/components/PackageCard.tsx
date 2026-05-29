@@ -79,7 +79,7 @@ export default function PackageCard({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, amount: 0 }}
         whileHover={{ y: -4 }}
         className="h-full bg-linear-to-br from-primary-50 to-primary-100 border-2 border-primary-200 rounded-2xl p-6 cursor-pointer transition-all hover:border-primary-400 hover:shadow-lg"
         onClick={handleClick}
@@ -164,7 +164,7 @@ export default function PackageCard({
     <motion.div
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
+      viewport={{ once: true, amount: 0 }}
       className="p-4 md:p-6 bg-white border border-gray-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all group cursor-pointer"
       onClick={handleClick}
     >

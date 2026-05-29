@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Globe, Zap, Search, X } from 'lucide-react';
-import CountryFlagIcon from './CountryFlagIcon';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useGetCountriesAutocompleteQuery } from '@/store/slices/esimSlice';
@@ -173,7 +172,7 @@ export function CountriesShowcase() {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search countries... (Cmd+K)"
+              placeholder="Search countries..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-full pl-12 pr-10 py-3 rounded-xl border-2 border-primary-200 focus:border-primary-600 focus:outline-none bg-white text-primary-900 placeholder-primary-500 transition-colors"
@@ -191,12 +190,15 @@ export function CountriesShowcase() {
             <span>↓↑ Navigate</span>
             <span>↵ Select</span>
             <span>Esc Clear</span>
+            <span className="hidden md:inline opacity-60">· Cmd+K to focus</span>
           </div>
         </motion.div>
 
         {/* Results Count */}
         <div className="mb-6 text-sm font-semibold text-primary-700">
-          Showing {filteredCountries.length} of {countries.length} countries
+          {searchQuery.trim()
+            ? `${filteredCountries.length} result${filteredCountries.length !== 1 ? 's' : ''} for "${searchQuery}"`
+            : `${countries.length} countries available`}
         </div>
 
         {/* Countries Grid */}
@@ -222,7 +224,9 @@ export function CountriesShowcase() {
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
                   {/* Premium Card Design */}
-                  <div className={`relative h-24 bg-white rounded-2xl p-4 flex items-center gap-3 border-2 shadow-sm overflow-hidden transition-all ${
+                  <div
+                    title={country.name}
+                    className={`relative h-24 bg-white rounded-2xl p-4 flex items-center gap-3 border-2 shadow-sm overflow-hidden transition-all ${
                     selectedIndex === index
                       ? 'border-primary-600 shadow-lg scale-105'
                       : 'border-primary-200 hover:border-primary-300'
@@ -233,16 +237,18 @@ export function CountriesShowcase() {
 
                     {/* Left: Circular Flag Badge */}
                     <div className="relative shrink-0">
-                      <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-sm">
-                        <CountryFlagIcon
-                          countryCode={country.code}
-                          size={120}
-                          className="w-full h-full object-cover"
+                      <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-sm bg-gray-100">
+                        {/* plain <img> avoids Next.js Image intrinsic-size fighting object-cover */}
+                        <img
+                          src={`https://flagcdn.com/w160/${country.code.toLowerCase()}.png`}
+                          alt={`${country.name} flag`}
+                          className="w-full h-full object-cover object-center"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
                         />
                       </div>
-                      
-                      {/* Subtle overlay for dimension */}
-                      <div className="absolute inset-0 rounded-full bg-linear-to-br from-white/20 to-transparent pointer-events-none" />
                     </div>
 
                     {/* Right: Content Section */}

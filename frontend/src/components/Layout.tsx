@@ -11,7 +11,7 @@ interface LayoutProps {
 // pt-20 (80px) gives comfortable clearance on all screen sizes.
 const Layout: React.FC<LayoutProps> = ({ children, showFooter = true }) => {
   return (
-    <div className="flex flex-col min-h-screen bg-primary-50">
+    <div className="flex flex-col min-h-screen bg-[#f7f9fb]">
       <HeaderWrapper />
       <main className="flex-1 pt-20">{children}</main>
       {showFooter && <Footer />}

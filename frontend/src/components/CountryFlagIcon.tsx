@@ -10,19 +10,24 @@ interface CountryFlagProps {
 const CountryFlagIcon: React.FC<CountryFlagProps> = ({ countryCode, className = '', size = 24 }) => {
   const flagUrl = useMemo(() => {
     if (!countryCode) return null;
-    
+
     const codeMatch = countryCode.match(/^([a-zA-Z]{2})/);
-    const code = codeMatch ? codeMatch[1].toUpperCase() : countryCode.toUpperCase();
-    if (code === 'EU') {
-      return `https://p.qrsim.net/img/flags/eu-42.png`;
-    }
-    
-    const countryCode_lower = code.substring(0, 2).toLowerCase();
-    return `https://p.qrsim.net/img/flags/${countryCode_lower}.png`;
+    const code = codeMatch ? codeMatch[1].toUpperCase() : countryCode.substring(0, 2).toUpperCase();
+
+    if (!code || code.length < 2) return null;
+
+    return `https://flagcdn.com/w160/${code.toLowerCase()}.png`;
   }, [countryCode]);
 
   if (!flagUrl) {
-    return <span className={className}>Globe</span>;
+    return (
+      <span
+        className={`inline-flex items-center justify-center rounded-sm bg-gray-100 text-gray-400 text-[10px] font-bold ${className}`}
+        style={{ width: size, height: size }}
+      >
+        ?
+      </span>
+    );
   }
 
   return (
@@ -30,8 +35,9 @@ const CountryFlagIcon: React.FC<CountryFlagProps> = ({ countryCode, className = 
       src={flagUrl}
       alt={`${countryCode} flag`}
       width={size}
-      height={size}
-      className={`rounded-sm ${className}`}
+      height={Math.round(size * 0.75)}
+      unoptimized
+      className={`rounded-sm object-cover ${className}`}
     />
   );
 };
